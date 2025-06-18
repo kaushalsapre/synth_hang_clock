@@ -45,21 +45,39 @@ function broadcastState() {
 
 function advanceAct() {
   currentIndex++;
+
   if (currentIndex >= setlist.length) {
     clearInterval(interval);
     io.emit("clockEnd", { message: "Set complete" });
     return;
   }
+
   currentStart = Date.now();
-  broadcastState();
+
+  // Send immediate update for the new act
+  io.emit("clockUpdate", {
+    act: setlist[currentIndex].name,
+    elapsed: 0,
+    duration: setlist[currentIndex].duration * 60,
+    next: (setlist[currentIndex + 1] && setlist[currentIndex + 1].name) || "End"
+  });
 }
 
 function startShow() {
   currentIndex = 0;
   currentStart = Date.now();
   clearInterval(interval);
+
+  io.emit("clockUpdate", {
+    act: setlist[0].name,
+    elapsed: 0,
+    duration: setlist[0].duration * 60,
+    next: setlist[1]?.name || "End"
+  });
+
   interval = setInterval(broadcastState, 1000);
 }
+
 
 io.on("connection", (socket) => {
   console.log("Client connected");
